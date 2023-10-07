@@ -1,252 +1,253 @@
-#include<bits/stdc++.h> // Thư viện chuẩn của C++ bao gồm tất cả các thư viện cơ bản
-using namespace std; // Khai báo không gian tên để sử dụng các hàm, lớp, biến,... trong thư viện chuẩn mà không cần phải ghi đầy đủ tên
+#include<bits/stdc++.h>
+using namespace std;
 
-#define MAX_LENGTH 100 // Định nghĩa hằng số MAX_LENGTH với giá trị là 100
+#define MAX_LENGTH 100 // Định nghĩa hằng số MAX_LENGTH (Define constant MAX_LENGTH)
 
-struct Coord{ // Khai báo kiểu dữ liệu mới Coord để lưu trữ tọa độ
-    int x,y; // Kiểu dữ liệu của x và y là int, lưu trữ tọa độ x và y
+struct Coord{ // Lưu trữ tọa độ (Store coordinates)
+    int x,y;
 };
-struct List_Coord{ // Khai báo kiểu dữ liệu mới List_Coord để lưu trữ danh sách các tọa độ
-    Coord Data[MAX_LENGTH]; // Mảng Data có kiểu dữ liệu là Coord và có kích thước MAX_LENGTH, lưu trữ danh sách các tọa độ
-    int Size; // Kiểu dữ liệu của Size là int, lưu trữ kích thước của danh sách
+struct List_Coord{ // Lưu trữ danh sách các tọa độ (Store a list of coordinates)
+    Coord Data[MAX_LENGTH];
+    int Size;
 };
 
-void Init_List_Coord(List_Coord *List){ // Hàm khởi tạo danh sách List_Coord
-    List->Size = 0; // Gán giá trị cho Size bằng 0, tức là danh sách rỗng
+void Init_List_Coord(List_Coord *List){ // Khởi tạo danh sách (Initialize list)
+    List->Size = 0;
 }
 
-void Append_List_Coord(List_Coord *List, Coord Coord){ // Hàm thêm phần tử vào danh sách List_Coord
-    List->Data[List->Size++] = Coord; // Thêm phần tử vào danh sách và tăng kích thước danh sách lên 1
+void Append_List_Coord(List_Coord *List, Coord Coord){ // Thêm phần tử vào danh sách (Add element to list)
+    List->Data[List->Size++] = Coord;
 }
 
-#define NB_ROWS 9 // Định nghĩa hằng số NB_ROWS với giá trị là 9, tức là số hàng của ma trận Sudoku
-#define NB_COLS 9 // Định nghĩa hằng số NB_COLS với giá trị là 9, tức là số cột của ma trận Sudoku
+#define NB_ROWS 9 // Định nghĩa hằng số NB_ROWS (Define constant NB_ROWS)
+#define NB_COLS 9 // Định nghĩa hằng số NB_COLS (Define constant NB_COLS)
 
-struct Constrains{ // Khai báo kiểu dữ liệu mới Constrains để lưu trữ các ràng buộc trong Sudoku
-    int Data[NB_ROWS*NB_COLS][NB_ROWS*NB_COLS]; // Mảng Data có kiểu dữ liệu là int và có kích thước NB_ROWS*NB_COLS x NB_ROWS*NB_COLS, lưu trữ ma trận kề của đồ thị ràng buộc
-    int Num; // Kiểu dữ liệu của Num là int, lưu trữ số lượng ràng buộc
+struct Constrains{ // Lưu trữ các ràng buộc trong Sudoku (Store constraints in Sudoku)
+    int Data[NB_ROWS*NB_COLS][NB_ROWS*NB_COLS];
+    int Num;
 };
 
-void Init_Constrains(Constrains * Constrains){ // Hàm khởi tạo ràng buộc Constrains
+void Init_Constrains(Constrains * Constrains){ // Khởi tạo ràng buộc (Initialize constraints)
     for(int i=0;i<NB_ROWS*NB_COLS;i++){
         for(int j=0;j<NB_ROWS*NB_COLS;j++){
-            Constrains->Data[i][j] = 0; // Gán giá trị cho mảng Data bằng 0, tức là chưa có ràng buộc nào được thiết lập
+            Constrains->Data[i][j] = 0;
         }
     }
-    Constrains->Num = NB_ROWS*NB_COLS; // Gán giá trị cho Num bằng NB_ROWS*NB_COLS, tức là số lượng ràng buộc tối đa
+    Constrains->Num = NB_ROWS*NB_COLS;
 }
 
-int Index_Of(Coord Coord){ // Hàm tính chỉ số của một tọa độ trong ma trận 2 chiều
-    return (NB_ROWS*Coord.x+Coord.y); // Trả về chỉ số của tọa độ trong ma trận 2 chiều theo công thức: chỉ số = số hàng * x + y
+int Index_Of(Coord Coord){ // Tính chỉ số của một tọa độ (Calculate index of a coordinate)
+    return (NB_ROWS*Coord.x+Coord.y);
 }
 
-Coord Position_Of_Vertex(int Vertex){ // Hàm tính tọa độ của một đỉnh trong ma trận 2 chiều
+Coord Position_Of_Vertex(int Vertex){ // Tính tọa độ của một đỉnh (Calculate coordinate of a vertex)
     Coord Coord;
-    Coord.x = Vertex / NB_ROWS; // Tính toạ độ x theo công thức: x = chỉ số / số hàng
-    Coord.y = Vertex % NB_COLS; // Tính toạ độ y theo công thức: y = chỉ số % số cột
-    return Coord; // Trả về tọa độ của đỉnh
+    Coord.x = Vertex / NB_ROWS;
+    Coord.y = Vertex % NB_COLS;
+    return Coord;
 }
 
-int Add_Constrain(Constrains *Constrains, Coord Sourse, Coord Target){ // Hàm thêm ràng buộc vào Constrains
-    int u = Index_Of(Sourse); // Tính chỉ số của tọa độ nguồn
-    int v = Index_Of(Target); // Tính chỉ số của tọa độ đích
-    if(Constrains->Data[u][v]==0){ // Nếu chưa có ràng buộc giữa hai tọa độ
-        Constrains->Data[u][v]=1; // Thiết lập ràng buộc giữa hai tọa độ
-        Constrains->Data[v][u]=1; // Thiết lập ràng buộc giữa hai tọa độ (đồ thị vô hướng)
-        return 1; // Trả về 1 nếu thêm ràng buộc thành công
+int Add_Constrain(Constrains *Constrains, Coord Sourse, Coord Target){ // Thêm ràng buộc vào Constrains (Add constraint to Constrains)
+    int u = Index_Of(Sourse);
+    int v = Index_Of(Target);
+    if(Constrains->Data[u][v]==0){
+        Constrains->Data[u][v]=1;
+        Constrains->Data[v][u]=1;
+        return 1;
     }
-    return 0; // Trả về 0 nếu không thêm được ràng buộc (đã có ràng buộc giữa hai tọa độ)
+    return 0;
 }
 
-List_Coord Get_Constrains(Constrains Constrains, Coord Coord){ // Hàm lấy danh sách các ràng buộc trong Constrains liên quan đến một tọa độ cụ thể
-    int v = Index_Of(Coord); // Tính chỉ số của tọa độ
-    List_Coord Result; // Khai báo biến Result để lưu trữ kết quả
-    Init_List_Coord(&Result); // Khởi tạo danh sách Result
-    for(int i=0;i<Constrains.Num;i++){ // Duyệt qua từng ràng buộc trong Constrains
-        if(Constrains.Data[v][i]==1){ // Nếu có ràng buộc giữa hai tọa độ
-            Append_List_Coord(&Result,Position_Of_Vertex(i)); // Thêm tọa độ liên quan vào danh sách Result
+
+List_Coord Get_Constrains(Constrains Constrains, Coord Coord){ // Lấy danh sách các ràng buộc liên quan đến một tọa độ (Get list of constraints related to a coordinate)
+    int v = Index_Of(Coord);
+    List_Coord Result;
+    Init_List_Coord(&Result);
+    for(int i=0;i<Constrains.Num;i++){
+        if(Constrains.Data[v][i]==1){
+            Append_List_Coord(&Result,Position_Of_Vertex(i));
         }
     }
-    return Result; // Trả về danh sách các ràng buộc liên quan đến tọa độ cụ thể
+    return Result;
 }
 
-#define MAX_VALUE 10 // Định nghĩa hằng số MAX_VALUE với giá trị là 10, tức là giá trị lớn nhất có thể có trong một ô của ma trận Sudoku
-#define EMPTY 0 // Định nghĩa hằng số EMPTY với giá trị là 0, tức là giá trị của một ô trống trong ma trận Sudoku
-#define AREA_SQUARE_SIZE 3 // Định nghĩa hằng số AREA_SQUARE_SIZE với giá trị là 3, tức là kích thước của một vùng vuông nhỏ trong ma trận Sudoku
+#define MAX_VALUE 10 // Giá trị lớn nhất có thể có trong một ô của ma trận Sudoku (Maximum value that can be in a cell of the Sudoku matrix)
+#define EMPTY 0 // Giá trị của một ô trống trong ma trận Sudoku (Value of an empty cell in the Sudoku matrix)
+#define AREA_SQUARE_SIZE 3 // Kích thước của một vùng vuông nhỏ trong ma trận Sudoku (Size of a small square area in the Sudoku matrix)
 
-struct Sudoku{ // Khai báo kiểu dữ liệu mới Sudoku để lưu trữ ma trận Sudoku và các ràng buộc liên quan
-    int Cells[NB_ROWS][NB_COLS]; // Mảng Cells có kiểu dữ liệu là int và có kích thước NB_ROWS x NB_COLS, lưu trữ ma trận Sudoku
-    Constrains Constrains; // Kiểu dữ liệu của Constrains là Constrains, lưu trữ các ràng buộc liên quan đến ma trận Sudoku
+struct Sudoku{ // Lưu trữ ma trận Sudoku và các ràng buộc liên quan (Store Sudoku matrix and related constraints)
+    int Cells[NB_ROWS][NB_COLS];
+    Constrains Constrains;
 };
 
-void Init_Sudoku(Sudoku *Sudoku){ // Hàm khởi tạo Sudoku với ma trận rỗng và không có ràng buộc nào được thiết lập
+void Init_Sudoku(Sudoku *Sudoku){ // Khởi tạo Sudoku với ma trận rỗng và không có ràng buộc nào được thiết lập (Initialize Sudoku with empty matrix and no constraints set)
     for(int i=0;i<NB_ROWS;i++){
         for(int j=0;j<NB_COLS;j++){
-            Sudoku->Cells[i][j] = EMPTY; // Gán giá trị cho mảng Cells bằng EMPTY, tức là ma trận rỗng
+            Sudoku->Cells[i][j] = EMPTY;
         }
     }
-    Init_Constrains(&Sudoku->Constrains); // Khởi tạo Constrains, tức là không có ràng buộc nào được thiết lập
+    Init_Constrains(&Sudoku->Constrains);
 }
 
-void Init_Sudoku_With_Values(Sudoku *Sudoku, int Inputs[NB_ROWS][NB_COLS]){ // Hàm khởi tạo Sudoku với ma trận đầu vào và không có ràng buộc nào được thiết lập
+void Init_Sudoku_With_Values(Sudoku *Sudoku, int Inputs[NB_ROWS][NB_COLS]){ // Khởi tạo Sudoku với ma trận đầu vào và không có ràng buộc nào được thiết lập (Initialize Sudoku with input matrix and no constraints set)
     for(int i=0;i<NB_ROWS;i++){
         for(int j=0;j<NB_COLS;j++){
-            Sudoku->Cells[i][j] = Inputs[i][j]; // Gán giá trị cho mảng Cells bằng giá trị đầu vào, tức là ma trận đầu vào
+            Sudoku->Cells[i][j] = Inputs[i][j];
         }
     }
-    Init_Constrains(&Sudoku->Constrains); // Khởi tạo Constrains, tức là không có ràng buộc nào được thiết lập
+    Init_Constrains(&Sudoku->Constrains);
 }
 
-void Print_Sudoku(Sudoku Sudoku){ // Hàm in ra Sudoku
-    printf("Sudoku:\n"); // In ra dòng chữ "Sudoku:"
-    for(int i=0;i<NB_ROWS;i++){ // Duyệt qua từng hàng của ma trận Sudoku
-        if(i % AREA_SQUARE_SIZE == 0){ // Nếu hàng hiện tại chia hết cho AREA_SQUARE_SIZE
-            printf("----------------------\n"); // In ra dòng kẻ ngang để phân cách các vùng vuông nhỏ
+void Print_Sudoku(Sudoku Sudoku){ // In ra Sudoku (Print out Sudoku)
+    printf("Sudoku:\n");
+    for(int i=0;i<NB_ROWS;i++){
+        if(i % AREA_SQUARE_SIZE == 0){
+            printf("----------------------\n");
         }
-        for(int j=0;j<NB_COLS;j++){ // Duyệt qua từng cột của ma trận Sudoku
-            if(j % AREA_SQUARE_SIZE == 0){ // Nếu cột hiện tại chia hết cho AREA_SQUARE_SIZE
-                printf("|"); // In ra dấu "|" để phân cách các vùng vuông nhỏ
+        for(int j=0;j<NB_COLS;j++){
+            if(j % AREA_SQUARE_SIZE == 0){
+                printf("|");
             }
-            printf("%d ",Sudoku.Cells[i][j]); // In ra giá trị của mảng Cells tại vị trí (i,j)
+            printf("%d ",Sudoku.Cells[i][j]);
         }
-        printf("|\n"); // In ra dấu "|" và xuống dòng
+        printf("|\n");
     }
-    printf("----------------------\n"); // In ra dòng kẻ ngang cuối cùng
+    printf("----------------------\n");
 }
 
-int Is_Fill_Sudoku(Sudoku Sudoku){ // Hàm kiểm tra xem Sudoku đã được điền đầy đủ hay chưa
-    for(int i=0;i<NB_ROWS;i++){ // Duyệt qua từng hàng của ma trận Sudoku
-        for(int j=0;j<NB_COLS;j++){ // Duyệt qua từng cột của ma trận Sudoku
-            if(Sudoku.Cells[i][j] == EMPTY){ // Nếu ô (i,j) của ma trận Sudoku đang trống
-                return 0; // Trả về 0, tức là ma trận Sudoku chưa được điền đầy đủ
+int Is_Fill_Sudoku(Sudoku Sudoku){ // Kiểm tra xem Sudoku đã được điền đầy đủ hay chưa (Check whether the Sudoku has been fully filled or not)
+    for(int i=0;i<NB_ROWS;i++){
+        for(int j=0;j<NB_COLS;j++){
+            if(Sudoku.Cells[i][j] == EMPTY){
+                return 0; // Chưa được điền đầy đủ (Not fully filled)
             }
         }
     }
-    return 1; // Trả về 1, tức là ma trận Sudoku đã được điền đầy đủ
+    return 1; // Đã được điền đầy đủ (Fully filled)
 }
 
 
-void Spread_Constrains_From(Coord Position, Constrains *Constrains, List_Coord *Changeds){ // Hàm thêm ràng buộc vào Constrains từ một tọa độ cụ thể và lưu lại danh sách các tọa độ bị thay đổi ràng buộc
-    int Row = Position.x; // Lấy toạ độ x của tọa độ cụ thể
-    int Col = Position.y; // Lấy toạ độ y của tọa độ cụ thể
+void Spread_Constrains_From(Coord Position, Constrains *Constrains, List_Coord *Changeds){ // Thêm ràng buộc từ một tọa độ và lưu các tọa độ thay đổi (Add constraints from a coordinate and save changed coordinates)
+    int Row = Position.x;
+    int Col = Position.y;
     int i,j;
-    for(i=0;i<NB_ROWS;i++){ // Duyệt qua từng hàng của ma trận Sudoku
-        if(i!=Row){ // Nếu hàng hiện tại khác với hàng của tọa độ cụ thể
-            Coord Pos = {i,Col}; // Tạo một tọa độ mới có toạ độ x bằng i và toạ độ y bằng Col
-            if(Add_Constrain(Constrains, Position, Pos)){ // Thêm ràng buộc giữa hai tọa độ và kiểm tra xem có thêm được hay không
-                Append_List_Coord(Changeds, Pos); // Nếu thêm được ràng buộc thì thêm tọa độ mới vào danh sách Changeds
+    for(i=0;i<NB_ROWS;i++){
+        if(i!=Row){
+            Coord Pos = {i,Col};
+            if(Add_Constrain(Constrains, Position, Pos)){
+                Append_List_Coord(Changeds, Pos);
             }
         }
     }
-    for(i=0;i<NB_COLS;i++){ // Duyệt qua từng cột của ma trận Sudoku
-        if(i!=Col){ // Nếu cột hiện tại khác với cột của tọa độ cụ thể
-            Coord Pos = {Row,i}; // Tạo một tọa độ mới có toạ độ x bằng Row và toạ độ y bằng i
-            if(Add_Constrain(Constrains, Position, Pos)){ // Thêm ràng buộc giữa hai tọa độ và kiểm tra xem có thêm được hay không
-                Append_List_Coord(Changeds, Pos); // Nếu thêm được ràng buộc thì thêm tọa độ mới vào danh sách Changeds
+    for(i=0;i<NB_COLS;i++){
+        if(i!=Col){
+            Coord Pos = {Row,i};
+            if(Add_Constrain(Constrains, Position, Pos)){
+                Append_List_Coord(Changeds, Pos);
             }
         }
     }
-    for(i=0;i<AREA_SQUARE_SIZE;i++){ // Duyệt qua từng hàng của vùng vuông nhỏ
-        for(j=0;j<AREA_SQUARE_SIZE;j++){ // Duyệt qua từng cột của vùng vuông nhỏ
-            int Area_X = (Row/AREA_SQUARE_SIZE)*AREA_SQUARE_SIZE; // Tính toạ độ x của vùng vuông nhỏ chứa tọa độ cụ thể
-            int Area_Y = (Col/AREA_SQUARE_SIZE)*AREA_SQUARE_SIZE; // Tính toạ độ y của vùng vuông nhỏ chứa tọa độ cụ thể
-            if(Area_X+i != Row || Area_Y+j != Col){ // Nếu tọa độ mới khác với tọa độ cụ thể
-                Coord Pos = {Area_X+i, Area_Y+j}; // Tạo một tọa độ mới có toạ độ x bằng Area_X+i và toạ độ y bằng Area_Y+j
-                if(Add_Constrain(Constrains, Position, Pos)){ // Thêm ràng buộc giữa hai tọa độ và kiểm tra xem có thêm được hay không
-                    Append_List_Coord(Changeds, Pos); // Nếu thêm được ràng buộc thì thêm tọa độ mới vào danh sách Changeds
+    for(i=0;i<AREA_SQUARE_SIZE;i++){
+        for(j=0;j<AREA_SQUARE_SIZE;j++){
+            int Area_X = (Row/AREA_SQUARE_SIZE)*AREA_SQUARE_SIZE;
+            int Area_Y = (Col/AREA_SQUARE_SIZE)*AREA_SQUARE_SIZE;
+            if(Area_X+i != Row || Area_Y+j != Col){
+                Coord Pos = {Area_X+i, Area_Y+j};
+                if(Add_Constrain(Constrains, Position, Pos)){
+                    Append_List_Coord(Changeds, Pos);
                 }
             }
         }
     }
 }
 
-struct List{ // Khai báo kiểu dữ liệu mới List để lưu trữ danh sách các số nguyên
-    int Elements[MAX_LENGTH]; // Mảng Elements có kiểu dữ liệu là int và có kích thước MAX_LENGTH, lưu trữ danh sách các số nguyên
-    int Size; // Kiểu dữ liệu của Size là int, lưu trữ kích thước của danh sách
+struct List{ // Lưu trữ danh sách các số nguyên (Store a list of integers)
+    int Elements[MAX_LENGTH];
+    int Size;
 };
 
-void Init_List(List *List){ // Hàm khởi tạo danh sách List
-    List->Size = 0; // Gán giá trị cho Size bằng 0, tức là danh sách rỗng
+void Init_List(List *List){ // Khởi tạo danh sách (Initialize list)
+    List->Size = 0;
 }
 
-void Append_List(List *List, int Element){ // Hàm thêm phần tử vào danh sách List
-    List->Elements[List->Size++] = Element; // Thêm phần tử vào danh sách và tăng kích thước danh sách lên 1
+void Append_List(List *List, int Element){ // Thêm phần tử vào danh sách (Add element to list)
+    List->Elements[List->Size++] = Element;
 }
 
-List Get_Available_Values(Coord Position, Sudoku Sudoku){ // Hàm lấy danh sách các giá trị có thể điền vào ô còn trống
-    List_Coord Pos_List = Get_Constrains(Sudoku.Constrains, Position); // Lấy danh sách các ràng buộc liên quan đến tọa độ cụ thể
-    int Available[MAX_VALUE]; // Khai báo mảng Available để lưu trữ các giá trị có thể điền vào ô còn trống
+List Get_Available_Values(Coord Position, Sudoku Sudoku){ // Lấy danh sách các giá trị có thể điền vào ô trống (Get list of values that can be filled in the empty cell)
+    List_Coord Pos_List = Get_Constrains(Sudoku.Constrains, Position);
+    int Available[MAX_VALUE];
     int i;
     for(i=1;i<MAX_VALUE;i++){
-        Available[i] = 1; // Gán giá trị cho mảng Available bằng 1, tức là tất cả các giá trị đều có thể điền vào ô còn trống
+        Available[i] = 1;
     }
-    for(i=0;i<Pos_List.Size;i++){ // Duyệt qua từng ràng buộc trong danh sách Pos_List
-        Coord Pos = Pos_List.Data[i]; // Lấy tọa độ liên quan đến ràng buộc hiện tại
-        if(Sudoku.Cells[Pos.x][Pos.y]!= EMPTY){ // Nếu ô (Pos.x,Pos.y) của ma trận Sudoku không trống
-            Available[Sudoku.Cells[Pos.x][Pos.y]] = 0; // Gán giá trị cho mảng Available bằng 0, tức là giá trị đó không thể điền vào ô còn trống
+    for(i=0;i<Pos_List.Size;i++){
+        Coord Pos = Pos_List.Data[i];
+        if(Sudoku.Cells[Pos.x][Pos.y]!= EMPTY){
+            Available[Sudoku.Cells[Pos.x][Pos.y]] = 0;
         }
     }
-    List Result; // Khai báo biến Result để lưu trữ kết quả
-    Init_List(&Result); // Khởi tạo danh sách Result
-    for(i=1;i<MAX_VALUE;i++){ // Duyệt qua từng giá trị có thể có trong ma trận Sudoku
-        if(Available[i]){ // Nếu giá trị hiện tại có thể điền vào ô còn trống
-            Append_List(&Result,i); // Thêm giá trị hiện tại vào danh sách Result
+    List Result;
+    Init_List(&Result);
+    for(i=1;i<MAX_VALUE;i++){
+        if(Available[i]){
+            Append_List(&Result,i);
         }
     }
-    return Result; // Trả về danh sách các giá trị có thể điền vào ô còn trống
+    return Result;
 }
-Coord Get_Next_Empty_Cell(Sudoku Sudoku){ // Hàm tìm ô còn trống tiếp theo trong ma trận Sudoku
-    for(int i=0;i<NB_ROWS;i++){ // Duyệt qua từng hàng của ma trận Sudoku
-        for(int j=0;j<NB_COLS;j++){ // Duyệt qua từng cột của ma trận Sudoku
-            Coord Pos = {i,j}; // Tạo một tọa độ mới có toạ độ x bằng i và toạ độ y bằng j
-            if(Sudoku.Cells[i][j] == EMPTY){ // Nếu ô (i,j) của ma trận Sudoku đang trống
-                return Pos; // Trả về tọa độ của ô còn trống
+Coord Get_Next_Empty_Cell(Sudoku Sudoku){ // Tìm ô trống tiếp theo trong Sudoku (Find the next empty cell in Sudoku)
+    for(int i=0;i<NB_ROWS;i++){
+        for(int j=0;j<NB_COLS;j++){
+            Coord Pos = {i,j};
+            if(Sudoku.Cells[i][j] == EMPTY){
+                return Pos;
             }
         }
     }
-    return {-1,-1}; // Trả về tọa độ không hợp lệ nếu không tìm thấy ô còn trống nào trong ma trận Sudoku
+    return {-1,-1}; // Trả về tọa độ không hợp lệ nếu không tìm thấy ô trống nào (Return invalid coordinate if no empty cell is found)
 }
 
-int Explored_Counter = 0; // Khai báo biến Explored_Counter để lưu số lượng các lần duyệt
+int Explored_Counter = 0; // Đếm số lượng các lần duyệt (Count the number of iterations)
 
-int Sudoku_Back_Tracking(Sudoku *Sudoku){ // Hàm giải Sudoku bằng thuật toán backtracking
-    if(Is_Fill_Sudoku(*Sudoku)){ // Nếu Sudoku đã được điền đầy đủ
-        return 1; // Trả về 1, tức là đã giải xong Sudoku
+int Sudoku_Back_Tracking(Sudoku *Sudoku){ // Giải Sudoku bằng thuật toán backtracking (Solve Sudoku using backtracking algorithm)
+    if(Is_Fill_Sudoku(*Sudoku)){
+        return 1; // Đã giải xong Sudoku (Sudoku has been solved)
     }
-    Coord Position = Get_Next_Empty_Cell(*Sudoku); // Tìm ô còn trống tiếp theo trong ma trận Sudoku
-    List Availables = Get_Available_Values(Position, *Sudoku); // Lấy danh sách các giá trị có thể điền vào ô còn trống
-    if(Availables.Size==0){ // Nếu không có giá trị nào có thể điền vào ô còn trống
-        return 0; // Trả về 0, tức là không thể giải tiếp được Sudoku
+    Coord Position = Get_Next_Empty_Cell(*Sudoku);
+    List Availables = Get_Available_Values(Position, *Sudoku);
+    if(Availables.Size==0){
+        return 0; // Không thể giải tiếp được Sudoku (Cannot continue to solve Sudoku)
     }
-    for(int j=0;j<Availables.Size;j++){ // Duyệt qua từng giá trị có thể điền vào ô còn trống
-        int Value = Availables.Elements[j]; // Lấy giá trị hiện tại
-        Sudoku->Cells[Position.x][Position.y] = Value; // Điền giá trị vào ô còn trống
-        Explored_Counter++; // Tăng biến Explored_Counter lên 1
-        if(Sudoku_Back_Tracking(Sudoku)){ // Giải tiếp Sudoku bằng thuật toán backtracking
-            return 1; // Nếu giải được thì trả về 1, tức là đã giải xong Sudoku
+    for(int j=0;j<Availables.Size;j++){
+        int Value = Availables.Elements[j];
+        Sudoku->Cells[Position.x][Position.y] = Value;
+        Explored_Counter++;
+        if(Sudoku_Back_Tracking(Sudoku)){
+            return 1; // Đã giải xong Sudoku (Sudoku has been solved)
         }
-        Sudoku->Cells[Position.x][Position.y] = EMPTY; // Xóa giá trị khỏi ô còn trống và quay lui
+        Sudoku->Cells[Position.x][Position.y] = EMPTY; // Xóa giá trị khỏi ô và quay lui (Remove value from cell and backtrack)
     }
-    return 0; // Trả về 0, tức là không thể giải tiếp được Sudoku
+    return 0; // Không thể giải tiếp được Sudoku (Cannot continue to solve Sudoku)
 }
 
-Sudoku Solve_Sudoku(Sudoku Sudoku){ // Hàm giải Sudoku
-    for(int i=0;i<NB_ROWS;i++){ // Duyệt qua từng hàng của ma trận Sudoku
-        for(int j=0;j<NB_COLS;j++){ // Duyệt qua từng cột của ma trận Sudoku
+Sudoku Solve_Sudoku(Sudoku Sudoku){ // Giải Sudoku (Solve Sudoku)
+    for(int i=0;i<NB_ROWS;i++){
+        for(int j=0;j<NB_COLS;j++){
             List_Coord History;
-            Init_List_Coord(&History); // Khởi tạo danh sách History để lưu lại các ràng buộc đã thêm vào Constrains
-            Coord Pos = {i,j}; // Tạo một tọa độ mới có toạ độ x bằng i và toạ độ y bằng j
-            Spread_Constrains_From(Pos, &Sudoku.Constrains, &History); // Thêm ràng buộc vào Constrains từ tọa độ mới và lưu lại danh sách các tọa độ bị thay đổi ràng buộc vào danh sách History
+            Init_List_Coord(&History); // Khởi tạo danh sách lưu ràng buộc đã thêm (Initialize list to save added constraints)
+            Coord Pos = {i,j};
+            Spread_Constrains_From(Pos, &Sudoku.Constrains, &History); // Thêm ràng buộc từ tọa độ và lưu tọa độ thay đổi (Add constraints from coordinate and save changed coordinates)
         }
     }
-    Explored_Counter = 0; // Gán giá trị cho biến Explored_Counter bằng 0, tức là chưa duyệt lần nào
-    if(Sudoku_Back_Tracking(&Sudoku)){ // Giải Sudoku bằng thuật toán backtracking
-        printf("Solve\n"); // In ra dòng chữ "Solve" nếu giải được Sudoku
+    Explored_Counter = 0; // Đếm số lượng các lần duyệt (Count the number of iterations)
+    if(Sudoku_Back_Tracking(&Sudoku)){ // Giải Sudoku bằng thuật toán backtracking (Solve Sudoku using backtracking algorithm)
+        printf("Solve\n"); // In ra "Solve" nếu giải được Sudoku (Print "Solve" if Sudoku is solved)
     }else{
-        printf("Can't solve\n"); // In ra dòng chữ "Can't solve" nếu không giải được Sudoku
+        printf("Can't solve\n"); // In ra "Can't solve" nếu không giải được Sudoku (Print "Can't solve" if Sudoku cannot be solved)
     }
-    printf("Explored %d states\n",Explored_Counter); // In ra số lượng các lần duyệt trong quá trình giải Sudoku
-    return Sudoku; // Trả về ma trận Sudoku đã được giải (hoặc chưa được giải nếu không thể giải được)
+    printf("Explored %d states\n",Explored_Counter); // In ra số lượng các lần duyệt (Print the number of iterations)
+    return Sudoku; // Trả về Sudoku đã giải hoặc chưa giải nếu không thể giải được (Return solved or unsolved Sudoku if it cannot be solved)
 }
 
 int Input[9][9] = {
@@ -265,9 +266,6 @@ int main(int argc, char const *argv[]){
     Sudoku First;
     Init_Sudoku_With_Values(&First, Input);
     Print_Sudoku(First);
-    clock_t Start = clock();
     Sudoku Result = Solve_Sudoku(First);
-    clock_t TheEnd = clock();
     Print_Sudoku(Result);
-    printf("Execution time: %f seconds",(double)(TheEnd-Start)/CLOCKS_PER_SEC);
 }
